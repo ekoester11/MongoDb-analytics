@@ -29,6 +29,7 @@ db.initialize(
 
 		// << db CRUD routes >>
 
+		// IMPORTANT
 		// add an item
 		// this one is not working- test with:
 		// curl -H "Content-Type: application/json" -X POST -d '{"Widget":"test","Metric":"test2", "Params": {"i": 2, "a": "hi"}}' http://localhost:4000/items
@@ -45,6 +46,16 @@ db.initialize(
 					if (_error) throw _error;
 					response.json(_result);
 				});
+			});
+		});
+
+		// IMPORTANT
+		// get items
+		server.get("/items", (request, response) => {
+			// return updated list
+			dbCollection.find().toArray((error, result) => {
+				if (error) throw error;
+				response.json(result);
 			});
 		});
 

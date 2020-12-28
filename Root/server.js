@@ -33,6 +33,7 @@ db.initialize(
 		// this one is not working- test with:
 		// curl -H "Content-Type: application/json" -X POST -d '{"Widget":"test","Metric":"test2", "Params": {"i": 2, "a": "hi"}}' http://localhost:4000/items
 		// returns syntax error and not sure where it's coming from.
+		// simple test is curl -X POST http://localhost:4000/items and succesfully puts an empy object in db
 		server.post("/items", (request, response) => {
 			const item = request.body;
 			dbCollection.insertOne(item, (error, result) => {
@@ -48,22 +49,11 @@ db.initialize(
 		});
 
 		// retrieve one item
-		server.get("/items/:id", (request, response) => {
-			const itemId = request.params.id;
-			dbCollection.findOne({ id: itemId }, (error, result) => {
+		server.get("/items/Widget", (request, response) => {
+			const w = request.params.Widget;
+			dbCollection.findOne({ Widget: w }, (error, result) => {
 				if (error) throw error;
 				// return item
-				console.log("hi");
-				console.log(result);
-				response.json(result);
-			});
-		});
-
-		// get all items
-		server.get("/items", (request, response) => {
-			// return updated list
-			dbCollection.find().toArray((error, result) => {
-				if (error) throw error;
 				response.json(result);
 			});
 		});

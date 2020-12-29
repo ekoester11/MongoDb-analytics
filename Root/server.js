@@ -21,23 +21,19 @@ db.initialize(
 	collectionName,
 	function (dbCollection) {
 		// successCallback
-		// get all items
+		// get all events
 		dbCollection.find().toArray(function (err, result) {
 			if (err) throw err;
-			console.log(result);
+			console.log("Connected to db!");
 		});
 
 		// << db CRUD routes >>
 
-		// IMPORTANT
-		// add an item
-		// this one is not working- test with:
-		// curl -H "Content-Type: application/json" -X POST -d '{"Widget":"test","Metric":"test2", "Params": {"i": 2, "a": "hi"}}' http://localhost:4000/items
-		// returns syntax error and not sure where it's coming from.
-		// simple test is curl -X POST http://localhost:4000/items and succesfully puts an empy object in db
-		server.post("/items", (request, response) => {
-			const item = request.body;
-			dbCollection.insertOne(item, (error, result) => {
+		// working!
+		// add an event
+		server.post("/events", (request, response) => {
+			const event = request.body;
+			dbCollection.insertOne(event, (error, result) => {
 				// callback of insertOne
 				if (error) throw error;
 				// return updated list
@@ -49,60 +45,38 @@ db.initialize(
 			});
 		});
 
-		// IMPORTANT
-		// get items
-		server.get("/items", (request, response) => {
-			// return updated list
-			dbCollection.find().toArray((error, result) => {
+		// working!
+		// filter events
+		server.get("/events/filter", (request, response) => {
+			const metric = request.body.metric
+			const {widget, orgId, type, before, after} = request.body.params
+			let findObject = {
+				...(metric && {"metric": metric}),
+				...(widget && {"params.widget": widget}),
+				...(orgId && {"params.orgId": orgId}),
+				...(type && {"params.type": type}),
+				...(after && {"params.dateTime": {$gt: after}}),
+				...(before && {"params.dateTime": {$lt: before}}),
+			}
+
+			dbCollection.find(findObject).toArray((error, result) => {
 				if (error) throw error;
 				response.json(result);
 			});
 		});
 
-		// retrieve one item
-		server.get("/items/Widget", (request, response) => {
-			const w = request.params.Widget;
-			dbCollection.findOne({ Widget: w }, (error, result) => {
+		// not working yet
+		// retrieve one event
+		server.get("/events/:id", (request, response) => {
+			const id = request.params.id;
+			console.log(id);
+			dbCollection.findOne({ "_id": id }, (error, result) => {
 				if (error) throw error;
-				// return item
+				// return event
 				response.json(result);
 			});
 		});
 
-		// update an item
-		server.put("/items/:id", (request, response) => {
-			const itemId = request.params.id;
-			const item = request.body;
-			console.log("Editing item: ", itemId, " to be ", item);
-
-			dbCollection.updateOne(
-				{ id: itemId },
-				{ $set: item },
-				(error, result) => {
-					if (error) throw error;
-					// send back entire updated list, to make sure frontend data is up-to-date
-					dbCollection.find().toArray(function (_error, _result) {
-						if (_error) throw _error;
-						response.json(_result);
-					});
-				}
-			);
-		});
-
-		// delete an item
-		server.delete("/items/:id", (request, response) => {
-			const itemId = request.params.id;
-			console.log("Delete item with id: ", itemId);
-
-			dbCollection.deleteOne({ id: itemId }, function (error, result) {
-				if (error) throw error;
-				// send back entire updated list after successful request
-				dbCollection.find().toArray(function (_error, _result) {
-					if (_error) throw _error;
-					response.json(_result);
-				});
-			});
-		});
 	},
 	function (err) {
 		// failureCallback
